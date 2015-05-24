@@ -40,7 +40,7 @@ public class MainActivity extends ActionBarActivity {
         for (int i=0;i<MySongs.size();i++)
         {
             //toast the name of the song i's like a alert
-            toast(MySongs.get(i).getName().toString());
+            //toast(MySongs.get(i).getName().toString());
             //put the name of the songs in the items tabale
             Items[i]=MySongs.get(i).getName().toString();
         }
