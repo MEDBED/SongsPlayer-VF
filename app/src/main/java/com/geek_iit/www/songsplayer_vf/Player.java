@@ -17,12 +17,15 @@ import java.util.ArrayList;
 
 public class Player extends ActionBarActivity implements View.OnClickListener{
 
-    MediaPlayer  mp;
+    static MediaPlayer  mp;
     ArrayList<File> MySongs;
     SeekBar sb;
     Button  btPlay,btFF,btFB,btNxt,btPv;
-    int position;
+    public int position;
     Uri u;
+    Thread updateSeekBar;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,19 +44,61 @@ public class Player extends ActionBarActivity implements View.OnClickListener{
         btNxt.setOnClickListener(this);
         btPv.setOnClickListener(this);
 
+        sb=(SeekBar)findViewById(R.id.seekBar);
+        updateSeekBar=new Thread(){
+            @Override
+            public void run() {
+                int totalDuration=mp.getDuration();
+                int currentPosition=0;
+                sb.setMax(totalDuration);
+                while(currentPosition<totalDuration){
+                    try{
+                        sleep(500);
+                        currentPosition=mp.getCurrentPosition();
+                        sb.setProgress(currentPosition);
 
+                    }catch (InterruptedException e){
+                        e.printStackTrace();
+                    }
+                }
+                //super.run();
+            }
+        };
+
+        if(mp!=null){
+            mp.stop();
+            mp.release();
+        }
 
         Intent i = getIntent();
         Bundle b = i.getExtras();
         MySongs = (ArrayList) b.getParcelableArrayList("songlist");
-        int position=b.getInt("pos", 0);
-
+        position=b.getInt("pos",0);
         u =Uri.parse(MySongs.get(position).toString());
-        mp=MediaPlayer.create(getApplicationContext(),u);
+        mp=MediaPlayer.create(getApplicationContext(), u);
         mp.start();
+        sb.setMax(mp.getDuration());
+        updateSeekBar.start();
 
+        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
-    }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mp.seekTo(seekBar.getProgress());
+
+            }
+        });
+
+        }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -100,23 +145,31 @@ public class Player extends ActionBarActivity implements View.OnClickListener{
             case(R.id.btNxt):
                 mp.stop();
                 mp.release();
-                position=(position+1)%MySongs.size();
+                //int var=(position+1)%MySongs.size();
+                if((position+1)>=MySongs.size()){
+                    position=0;
+                }else {
+                   position++;
+               }
                 u =Uri.parse(MySongs.get(position).toString());
-                mp=MediaPlayer.create(getApplicationContext(),u);
+                mp=MediaPlayer.create(getApplicationContext(), u);
                 mp.start();
+                sb.setMax(mp.getDuration());
                 break;
             case(R.id.btPv):
                 mp.stop();
                 mp.release();
-                position=(position-1<0)? MySongs.size()-1:position-1;
-                /*if(position-1<0){
+                //position=position-1;
+                //position=(position<0)? MySongs.size()-1:position-1;
+                if(position-1<0){
                     position=MySongs.size()-1;
                 }else {
                     position = position - 1;
-                }*/
+                }
                 u =Uri.parse(MySongs.get(position).toString());
                 mp=MediaPlayer.create(getApplicationContext(),u);
                 mp.start();
+                sb.setMax(mp.getDuration());
                 break;
 
 
